@@ -41,7 +41,7 @@ function getVersion(){
   }
 }
 
-var latestVersion = getVersion();
+var latestVersion = `7.0.0`;
 var previousVersion = latestVersion;
 var newTags = {};
 
@@ -70,10 +70,11 @@ while (true) {
   if (compare(version, latestVersion) > 0) {
     continue;
   }
+
   // if version is not the same of the previousVersion and is not already tagged (!tagMap[previousVersion])
   // add the previous version to the newTags object
   if (version !== previousVersion) {
-    if (!tagMap[previousVersion]) {
+    if (!tagMap[previousVersion] && !tagMap[`v${previousVersion}`]) {
       // Due to merges the oldest commit for a version may be a
       // ways back, so just keep overwriting and output them at the end
       newTags[previousVersion] = previousCommit;
@@ -83,16 +84,19 @@ while (true) {
   previousCommit = commit;
   previousVersion = version;
 }
+
+const getTagCommand = (commit, version) => `git tag v${version} ${commit}`
+
 exec('git checkout --quiet ' + mainBranch);
 _.each(newTags, function (commit, version) {
-  console.log('git tag ' + version + ' ' + commit);
+  console.log(getTagCommand(commit, version));
   if (!argv['dry-run']) {
-    exec('git tag ' + version + ' ' + commit);
+    exec(getTagCommand(commit, version));
   }
 });
 
 console.log('Finished.');
 if (!argv['dry-run']) {
-  exec('git tag ' + version + ' ' + commit);
+  exec(getTagCommand(commit, version));
   console.log('Do not forget to run "git push --tags" if you are satisfied.');
 }
